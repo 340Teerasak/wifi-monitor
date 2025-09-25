@@ -63,8 +63,8 @@ jobs:
       - name: Run checker script (Update Firestore, Check Status, and Notify)
         # ตั้งค่า Environment Variables จาก GitHub Secrets 
         env:
-          # SERVICE_ACCOUNT_B64 คือ Firebase Service Account JSON ที่ถูกเข้ารหัส Base64
-          SERVICE_ACCOUNT_B64: ${{ secrets.SERVICE_ACCOUNT_B64 }}
-          # LINE_NOTIFY_TOKEN คือ Token สำหรับ LINE Notify
-          LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
+              SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+              GMAIL_USER: ${{ secrets.GMAIL_USER }}
+              GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+              ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
         run: python checker/cloud_checker.py
