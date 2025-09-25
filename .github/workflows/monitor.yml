@@ -1,70 +1,29 @@
-# .github/workflows/monitor.yml
+name: Monitor Checker
 
-name: WiFi Monitor
-
-# ตั้งค่าให้รันทุก 1 นาที เพื่อรับ Heartbeat และเช็คสถานะ
 on:
   schedule:
-    - cron: '*/1 * * * *'
-  workflow_dispatch:
+    - cron: "*/1 * * * *"   # รันทุกๆ 5 นาที
+  workflow_dispatch:         # รันเองได้ด้วยปุ่มใน Actions
 
 jobs:
-  monitor_and_check:
+  check:
     runs-on: ubuntu-latest
-    
-    # กำหนด permissions ให้ GITHUB_TOKEN สามารถเขียน/อ่านได้
-    permissions:
-      contents: write # จำเป็นสำหรับการ Commit/Push ไฟล์สถานะกลับ
-
     steps:
-      - name: Checkout repository code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # จำเป็นสำหรับการ Commit/Push ไฟล์สถานะ
-          
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.11"
 
-      # ------------------------------------
-      # 1. รัน Client Script เพื่อ Ping และอัปเดตไฟล์สถานะ (Heartbeat File)
-      # ------------------------------------
-      - name: Install client dependencies
-        run: pip install -r client/requirements.txt
-        
-      - name: Run client script (Ping and create Heartbeat file)
-        run: python client/client.py
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      # ------------------------------------
-      # 2. Commit และ Push ไฟล์สถานะที่อัปเดตกลับไปยัง Repository
-      # ------------------------------------
-      # ไฟล์นี้ถือเป็น Heartbeat จากเครื่อง Client ที่ถูกส่งต่อมายัง Cloud Checker
-      - name: Commit and Push Heartbeat file
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          
-          if git diff --exit-code client/wifi_status.json; then
-              echo "No changes in wifi_status.json, skipping commit."
-          else
-              echo "Changes detected in wifi_status.json, committing..."
-              git add client/wifi_status.json
-              git commit -m "Auto: Update WiFi heartbeat [skip ci]"
-              git push
-          fi
-
-      # ------------------------------------
-      # 3. รัน Checker Script (อัปเดต Firestore และส่ง LINE Notify)
-      # ------------------------------------
-      - name: Install checker dependencies (Firebase & Line Notify)
-        run: pip install -r checker/requirements.txt
-        
-      - name: Run checker script (Update Firestore, Check Status, and Notify)
-        # ตั้งค่า Environment Variables จาก GitHub Secrets 
+      - name: Run cloud checker
         env:
-              SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-              GMAIL_USER: ${{ secrets.GMAIL_USER }}
-              GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-              ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
         run: python checker/cloud_checker.py
