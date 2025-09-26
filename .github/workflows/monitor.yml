@@ -2,7 +2,7 @@ name: Monitor Checker
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # รันทุกๆ 1 นาที
+    - cron: "*/1 * * * *"   # รันทุกๆ 5 นาที
   workflow_dispatch:         # รันเองได้ด้วยปุ่มใน Actions
 
 jobs:
@@ -26,22 +26,4 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
-        run: |
-          python - <<'EOF'
-          import os
-          import json
-          import firebase_admin
-          from firebase_admin import credentials
-
-          # แปลง JSON string จาก secret เป็น dict
-          service_account_info = os.environ['SERVICE_ACCOUNT_JSON']
-          service_account_dict = json.loads(service_account_info)
-
-          # สร้าง credential และ initialize Firebase
-          cred = credentials.Certificate(service_account_dict)
-          firebase_admin.initialize_app(cred)
-
-          # เรียกใช้งานไฟล์ cloud_checker.py
-          import checker.cloud_checker as checker
-          checker.main()  # สมมติว่าใน cloud_checker.py คุณมีฟังก์ชัน main()
-          EOF
+        run: python checker/cloud_checker.py
